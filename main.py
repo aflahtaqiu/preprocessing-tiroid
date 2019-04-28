@@ -1,6 +1,7 @@
 import csv
 import numpy as np
 import impyute as imp
+from scipy import stats
 from sklearn.preprocessing import MinMaxScaler
 
 data_arrays = list()
@@ -11,7 +12,7 @@ with open('data/data_tiroid_missing.csv', 'r') as csvFile:
 
 def setMissingValues(data):
     for i, itemi in enumerate(data):
-        for j, itemj in enumerate(data[i]):
+        for j, itemj in enumerate(itemi):
             if(itemj == '?'):
                 data[i][j] = np.nan
             else:
@@ -35,7 +36,35 @@ def setMinMaxNormalization(data):
         writer.writerows(data_minmax)
     csvFile.close()
 
+def setZscoreNormalization(data) :
+    data_zscore = list()
+    data_zscore = stats.zscore(data).tolist()
+
+    with open('data/zscore_new_tiroid.csv', 'w') as csvFile :
+        writer = csv.writer(csvFile)
+        writer.writerows(data_zscore)
+    csvFile.close()
+
+def sigmoid(x):
+    import math
+    return 1 / (1 + math.exp(-x))
+
+def setSigmoidNormalization(data):
+    data_sigmoid = list()
+    data_sigmoid = data
+    for i , itemi in enumerate(data):
+        for j, itemj in enumerate(itemi):
+            data_sigmoid[i][j] = sigmoid(itemj)
+
+    with open('data/sigmoidal_new_tiroid.csv', 'w') as csvFile :
+        writer = csv.writer(csvFile)
+        writer.writerows(data_sigmoid)
+    csvFile.close()
+
+
 new_data = list()
 new_data = setMissingValues(data_arrays)
 setMinMaxNormalization(new_data)
+setZscoreNormalization(new_data)
+setSigmoidNormalization(new_data)
 
