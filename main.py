@@ -16,8 +16,9 @@ data_label = np.array(data_arrays)[:, 5].tolist()
 
 new_data = setMissingValues(data_arrays)
 setMinMaxNormalization(new_data)
-setZscoreNormalization(new_data)
-setSigmoidNormalization(new_data)
+data_z_score = list()
+data_z_score = setZscoreNormalization(new_data)
+setSigmoidNormalization(data_z_score)
 
 
 def count_error(data_instance, data_label):
@@ -84,12 +85,13 @@ def setZscoreNormalization(data):
     error = count_error(list(np.array(data_zscore)[:, :5]),
                         list(np.array(data_zscore)[:, 5]))
     print("Error normalisasi zscore ", error, "%")
+    return data_zscore
 
 
 #%%set_sigmoid
 def sigmoid(x):
     import math
-    return 1 / (1 + math.exp(-x))
+    return (1 - math.exp(-x)) / (1 + math.exp(-x))
 
 
 #%%set_sigmoid_normalization
