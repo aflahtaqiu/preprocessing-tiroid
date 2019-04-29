@@ -2,7 +2,9 @@ import csv
 import numpy as np
 import impyute as imp
 from scipy import stats
+import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.neighbors import KNeighborsClassifier
 
 data_arrays = list()
 with open('data/data_tiroid_missing.csv', 'r') as csvFile:
@@ -28,8 +30,12 @@ def setMissingValues(data):
 
 def setMinMaxNormalization(data):
     minmax_scaler = MinMaxScaler()
-    data_minmax = list()
-    data_minmax = minmax_scaler.fit_transform(data).tolist()
+    data_minmax = data
+    data_label = np.array(data)[:, 5].tolist()
+    data_minmax = minmax_scaler.fit_transform(data)[:,:5].tolist()
+    
+    for i, itemi in enumerate(data_minmax):
+        data_minmax[i].append(data_label[i])
 
     with open('data/minmax_new_tiroid.csv', 'w') as csvFile :
         writer = csv.writer(csvFile)
@@ -38,8 +44,14 @@ def setMinMaxNormalization(data):
 
 def setZscoreNormalization(data) :
     data_zscore = list()
-    data_zscore = stats.zscore(data).tolist()
+    data_zscore = data
+    data_label = np.array(data)[:, 5].tolist()
+    data_zscore = stats.zscore(data)[:,:5].tolist()
 
+    for i, itemi in enumerate(data_zscore):
+        data_zscore[i].append(data_label[i])
+
+    print(data_zscore)
     with open('data/zscore_new_tiroid.csv', 'w') as csvFile :
         writer = csv.writer(csvFile)
         writer.writerows(data_zscore)
@@ -54,7 +66,10 @@ def setSigmoidNormalization(data):
     data_sigmoid = data
     for i , itemi in enumerate(data):
         for j, itemj in enumerate(itemi):
-            data_sigmoid[i][j] = sigmoid(itemj)
+            if(j<5):
+                data_sigmoid[i][j] = sigmoid(itemj)
+            else:
+                data_sigmoid[i][j] = itemj
 
     with open('data/sigmoidal_new_tiroid.csv', 'w') as csvFile :
         writer = csv.writer(csvFile)
@@ -67,4 +82,3 @@ new_data = setMissingValues(data_arrays)
 setMinMaxNormalization(new_data)
 setZscoreNormalization(new_data)
 setSigmoidNormalization(new_data)
-
