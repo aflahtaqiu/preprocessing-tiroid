@@ -7,6 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 
 data_arrays = list()
+knn = KNeighborsClassifier(n_neighbors=3)
 with open('data/data_tiroid_missing.csv', 'r') as csvFile:
     reader = csv.reader(csvFile)
     for row in reader:
@@ -34,8 +35,13 @@ def setMinMaxNormalization(data):
     data_label = np.array(data)[:, 5].tolist()
     data_minmax = minmax_scaler.fit_transform(data)[:,:5].tolist()
     
+    knn.fit(data_arrays, data_label)
+
     for i, itemi in enumerate(data_minmax):
         data_minmax[i].append(data_label[i])
+
+    hasil = knn.predict(data_minmax)
+    print(hasil)
 
     with open('data/minmax_new_tiroid.csv', 'w') as csvFile :
         writer = csv.writer(csvFile)
@@ -51,7 +57,6 @@ def setZscoreNormalization(data) :
     for i, itemi in enumerate(data_zscore):
         data_zscore[i].append(data_label[i])
 
-    print(data_zscore)
     with open('data/zscore_new_tiroid.csv', 'w') as csvFile :
         writer = csv.writer(csvFile)
         writer.writerows(data_zscore)
