@@ -7,44 +7,43 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 
-data_arrays = list()
-knn = KNeighborsClassifier(n_neighbors=3)
-with open('data/data_tiroid_missing.csv', 'r') as csvFile:
-    reader = csv.reader(csvFile)
-    for row in reader:
-        data_arrays.append(row)
+knn = KNeighborsClassifier(n_neighbors=5)
+data_arrays = pd.read_csv('data/data_tiroid_missing.csv')
+data_arrays = data_arrays.replace('?', np.nan)
+data_arrays = np.array(data_arrays, dtype=float)
 
 data_label = np.array(data_arrays)[:, 5].tolist()
 
+new_data = setMissingValues(data_arrays)
+setMinMaxNormalization(new_data)
+setZscoreNormalization(new_data)
+setSigmoidNormalization(new_data)
 
-#%%set_missing
-def setMissingValues(data):
-    for i, itemi in enumerate(data):
-        for j, itemj in enumerate(itemi):
-            if (itemj == '?'):
-                data[i][j] = np.nan
-            else:
-                data[i][j] = float(itemj)
 
-    with open('data/new_tiroid.csv', 'w') as csvFile:
-        writer = csv.writer(csvFile)
-        data = imp.fast_knn(np.array(data)).tolist()
-        writer.writerows(data)
-    csvFile.close()
-
-    data_nonlabel = np.array(data)[:, :5].tolist()
-    print(data_nonlabel)
-    data_length = len(data_nonlabel)
-    knn.fit(data_nonlabel, data_label)
-    prediksi = knn.predict(data_nonlabel)
+def count_error(data_instance, data_label):
+    data_length = len(data_instance)
+    knn.fit(data_instance, data_label)
+    prediksi = knn.predict(data_instance)
     beda = 0
 
     for i, item in enumerate(data_label):
         if (item != prediksi[i]):
-            beda = beda + 1
+            beda += 1
 
-    error = (beda / data_length) * 100
-    print("Error sebelum normalisasi ", error, "%")
+    return (beda / data_length) * 100
+
+
+#%%set_missing
+def setMissingValues(data):
+    data = imp.fast_knn(np.array(data)).tolist()
+    error = count_error(list(np.array(data)[:, :5]),
+                        list(np.array(data)[:, 5]))
+
+    with open('data/new_tiroid.csv', 'w') as csvFile:
+        writer = csv.writer(csvFile)
+        print("Error sebelum normalisasi ", error, "%")
+        writer.writerows(data)
+    csvFile.close()
 
     return data
 
@@ -63,14 +62,8 @@ def setMinMaxNormalization(data):
         writer.writerows(data_minmax)
     csvFile.close()
 
-    data_length = len(data_minmax)
-    knn.fit(data_minmax, data_label)
-    prediksi = knn.predict(data_minmax)
-    beda = 0
-    for i, item in enumerate(data_label):
-        if (item != prediksi[i]):
-            beda += 1
-    error = (beda / data_length) * 100
+    error = count_error(list(np.array(data_minmax)[:, :5]),
+                        list(np.array(data_minmax)[:, 5]))
     print("Error normalisasi minmax ", error, "%")
 
 
@@ -88,14 +81,8 @@ def setZscoreNormalization(data):
         writer.writerows(data_zscore)
     csvFile.close()
 
-    data_length = len(data_zscore)
-    knn.fit(data_zscore, data_label)
-    prediksi = knn.predict(data_zscore)
-    beda = 0
-    for i, item in enumerate(data_label):
-        if (item != prediksi[i]):
-            beda = beda + 1
-    error = (beda / data_length) * 100
+    error = count_error(list(np.array(data_zscore)[:, :5]),
+                        list(np.array(data_zscore)[:, 5]))
     print("Error normalisasi zscore ", error, "%")
 
 
@@ -121,19 +108,6 @@ def setSigmoidNormalization(data):
         writer.writerows(data_sigmoid)
     csvFile.close()
 
-    data_length = len(data_sigmoid)
-    knn.fit(list(np.array(data_sigmoid)[:, :5]), data_label)
-    prediksi = knn.predict(list(np.array(data_sigmoid)[:, :5]))
-    beda = 0
-    for i, item in enumerate(data_label):
-        if (item != prediksi[i]):
-            beda = beda + 1
-    error = (beda / data_length) * 100
+    error = count_error(list(np.array(data_sigmoid)[:, :5]),
+                        list(np.array(data_sigmoid)[:, 5]))
     print("Error normalisasi sigmoid ", error, "%")
-
-
-new_data = list()
-new_data = setMissingValues(data_arrays)
-setMinMaxNormalization(new_data)
-setZscoreNormalization(new_data)
-setSigmoidNormalization(new_data)
