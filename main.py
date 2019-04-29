@@ -1,3 +1,4 @@
+#%%all
 import csv
 import numpy as np
 import impyute as imp
@@ -15,15 +16,17 @@ with open('data/data_tiroid_missing.csv', 'r') as csvFile:
 
 data_label = np.array(data_arrays)[:, 5].tolist()
 
+
+#%%set_missing
 def setMissingValues(data):
     for i, itemi in enumerate(data):
         for j, itemj in enumerate(itemi):
-            if(itemj == '?'):
+            if (itemj == '?'):
                 data[i][j] = np.nan
             else:
-                data[i][j] = float (itemj)
+                data[i][j] = float(itemj)
 
-    with open('data/new_tiroid.csv', 'w') as csvFile :
+    with open('data/new_tiroid.csv', 'w') as csvFile:
         writer = csv.writer(csvFile)
         data = imp.fast_knn(np.array(data)).tolist()
         writer.writerows(data)
@@ -37,23 +40,25 @@ def setMissingValues(data):
     beda = 0
 
     for i, item in enumerate(data_label):
-        if(item != prediksi[i]):
-            beda = beda +1
+        if (item != prediksi[i]):
+            beda = beda + 1
 
-    error = (beda/data_length)*100
-    print("Error sebelum normalisasi ",error,"%")
+    error = (beda / data_length) * 100
+    print("Error sebelum normalisasi ", error, "%")
 
     return data
 
+
+#%%set_min_max
 def setMinMaxNormalization(data):
     minmax_scaler = MinMaxScaler()
     data_minmax = data
-    data_minmax = minmax_scaler.fit_transform(data)[:,:5].tolist()
+    data_minmax = minmax_scaler.fit_transform(data)[:, :5].tolist()
 
     for i, itemi in enumerate(data_minmax):
         data_minmax[i].append(data_label[i])
 
-    with open('data/minmax_new_tiroid.csv', 'w') as csvFile :
+    with open('data/minmax_new_tiroid.csv', 'w') as csvFile:
         writer = csv.writer(csvFile)
         writer.writerows(data_minmax)
     csvFile.close()
@@ -63,20 +68,22 @@ def setMinMaxNormalization(data):
     prediksi = knn.predict(data_minmax)
     beda = 0
     for i, item in enumerate(data_label):
-        if(item != prediksi[i]):
-            beda = beda +1
-    error = (beda/data_length)*100
-    print("Error normalisasi minmax ",error,"%")
+        if (item != prediksi[i]):
+            beda += 1
+    error = (beda / data_length) * 100
+    print("Error normalisasi minmax ", error, "%")
 
-def setZscoreNormalization(data) :
+
+#%%set_zscore
+def setZscoreNormalization(data):
     data_zscore = list()
     data_zscore = data
-    data_zscore = stats.zscore(data)[:,:5].tolist()
+    data_zscore = stats.zscore(data)[:, :5].tolist()
 
     for i, itemi in enumerate(data_zscore):
         data_zscore[i].append(data_label[i])
 
-    with open('data/zscore_new_tiroid.csv', 'w') as csvFile :
+    with open('data/zscore_new_tiroid.csv', 'w') as csvFile:
         writer = csv.writer(csvFile)
         writer.writerows(data_zscore)
     csvFile.close()
@@ -86,39 +93,43 @@ def setZscoreNormalization(data) :
     prediksi = knn.predict(data_zscore)
     beda = 0
     for i, item in enumerate(data_label):
-        if(item != prediksi[i]):
-            beda = beda +1
-    error = (beda/data_length)*100
-    print("Error normalisasi zscore ",error,"%")
+        if (item != prediksi[i]):
+            beda = beda + 1
+    error = (beda / data_length) * 100
+    print("Error normalisasi zscore ", error, "%")
 
+
+#%%set_sigmoid
 def sigmoid(x):
     import math
     return 1 / (1 + math.exp(-x))
 
+
+#%%set_sigmoid_normalization
 def setSigmoidNormalization(data):
     data_sigmoid = list()
     data_sigmoid = data
-    for i , itemi in enumerate(data):
+    for i, itemi in enumerate(data):
         for j, itemj in enumerate(itemi):
-            if(j<5):
+            if (j < 5):
                 data_sigmoid[i][j] = sigmoid(itemj)
             else:
                 data_sigmoid[i][j] = itemj
 
-    with open('data/sigmoidal_new_tiroid.csv', 'w') as csvFile :
+    with open('data/sigmoidal_new_tiroid.csv', 'w') as csvFile:
         writer = csv.writer(csvFile)
         writer.writerows(data_sigmoid)
     csvFile.close()
 
     data_length = len(data_sigmoid)
-    knn.fit(data_sigmoid, data_label)
-    prediksi = knn.predict(data_sigmoid)
+    knn.fit(list(np.array(data_sigmoid)[:, :5]), data_label)
+    prediksi = knn.predict(list(np.array(data_sigmoid)[:, :5]))
     beda = 0
     for i, item in enumerate(data_label):
-        if(item != prediksi[i]):
-            beda = beda +1
-    error = (beda/data_length)*100
-    print("Error normalisasi sigmoid ",error,"%")
+        if (item != prediksi[i]):
+            beda = beda + 1
+    error = (beda / data_length) * 100
+    print("Error normalisasi sigmoid ", error, "%")
 
 
 new_data = list()
