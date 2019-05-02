@@ -7,19 +7,6 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 
-knn = KNeighborsClassifier(n_neighbors=5)
-data_arrays = pd.read_csv('data/data_tiroid_missing.csv')
-data_arrays = data_arrays.replace('?', np.nan)
-data_arrays = np.array(data_arrays, dtype=float)
-
-data_label = np.array(data_arrays)[:, 5].tolist()
-
-new_data = setMissingValues(data_arrays)
-setMinMaxNormalization(new_data)
-data_z_score = list()
-data_z_score = setZscoreNormalization(new_data)
-setSigmoidNormalization(data_z_score)
-
 
 def count_error(data_instance, data_label):
     data_length = len(data_instance)
@@ -36,17 +23,33 @@ def count_error(data_instance, data_label):
 
 #%%set_missing
 def setMissingValues(data):
-    data = imp.fast_knn(np.array(data)).tolist()
-    error = count_error(list(np.array(data)[:, :5]),
-                        list(np.array(data)[:, 5]))
+    data = pd.DataFrame({
+        'a': data[:, 0],
+        'b': data[:, 1],
+        'c': data[:, 2],
+        'd': data[:, 3],
+        'e': data[:, 4],
+        'label': data[:, 5]
+    })
+
+    data_missing_grouped = data.groupby('label')
+
+    new_data_grouped = list()
+    for key, item in data_missing_grouped:
+        temp = list(imp.fast_knn(np.array(item), k=3))
+        for i in temp:
+            new_data_grouped.append(i)
+
+    error = count_error(list(np.array(new_data_grouped)[:, :5]),
+                        list(np.array(new_data_grouped)[:, 5]))
+    print("Error sebelum normalisasi ", error, "%")
 
     with open('data/new_tiroid.csv', 'w') as csvFile:
         writer = csv.writer(csvFile)
-        print("Error sebelum normalisasi ", error, "%")
-        writer.writerows(data)
+        writer.writerows(new_data_grouped)
     csvFile.close()
 
-    return data
+    return new_data_grouped
 
 
 #%%set_min_max
@@ -113,3 +116,17 @@ def setSigmoidNormalization(data):
     error = count_error(list(np.array(data_sigmoid)[:, :5]),
                         list(np.array(data_sigmoid)[:, 5]))
     print("Error normalisasi sigmoid ", error, "%")
+
+
+knn = KNeighborsClassifier(n_neighbors=3)
+data_arrays = pd.read_csv('data/data_tiroid_missing.csv')
+data_arrays = data_arrays.replace('?', np.nan)
+data_arrays = np.array(data_arrays, dtype=float)
+
+data_label = np.array(data_arrays)[:, 5].tolist()
+
+new_data = setMissingValues(data_arrays)
+setMinMaxNormalization(new_data)
+data_z_score = list()
+data_z_score = setZscoreNormalization(new_data)
+setSigmoidNormalization(data_z_score)
