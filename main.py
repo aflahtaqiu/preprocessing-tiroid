@@ -50,7 +50,6 @@ def setMinMaxNormalization(data):
     y = np.array(data)[:, 5]
 
     loo = LeaveOneOut()
-    loo.get_n_splits(X)
 
     error = 0
     for train_index, test_index in loo.split(X):
@@ -69,7 +68,6 @@ def setZscoreNormalization(data):
     y = np.array(data)[:, 5]
 
     loo = LeaveOneOut()
-    loo.get_n_splits(X)
 
     error = 0
     for train_index, test_index in loo.split(X):
@@ -95,7 +93,6 @@ def setSigmoidNormalization(data):
     y = np.array(data)[:, 5]
 
     loo = LeaveOneOut()
-    loo.get_n_splits(X)
 
     error = 0
     for train_index, test_index in loo.split(X):
@@ -113,10 +110,6 @@ def setSigmoidNormalization(data):
             error += 1
 
     print('Error Sigmoid : ', (error / len(data)) * 100, '%')
-
-    error = count_error(list(np.array(data_sigmoid)[:, :5]),
-                        list(np.array(data_sigmoid)[:, 5]))
-    print("Error normalisasi sigmoid ", error, "%")
 
 knn = KNeighborsClassifier(n_neighbors=3)
 data_arrays = pd.read_csv('data/data_tiroid_missing.csv')
