@@ -75,6 +75,9 @@ def setZscoreNormalization(data):
     for train_index, test_index in loo.split(X):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
+        for i in range(0, len(X_train[0])):
+            X_test[0][i] = (X_test[0][i] - stats.tmean(
+                X_train[:, i])) / stats.tstd(X_train[:, i])
         X_train = list(stats.zscore(X_train))
         if (count_error(X_train, X_test, y_train, y_test)):
             error += 1
