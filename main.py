@@ -6,87 +6,85 @@ from scipy import stats
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import LeaveOneOut
 
-knn = KNeighborsClassifier(n_neighbors=3)
-data_arrays = pd.read_csv('data/data_tiroid_missing.csv')
-data_arrays = data_arrays.replace('?', np.nan)
-data_arrays = np.array(data_arrays, dtype=float)
+def count_error(X_train, X_test, y_train, y_test):
+    knn.fit(X_train, y_train)
+    prediksi = knn.predict(X_test)
+    if prediksi != y_test:
+        return True
 
-data_label = np.array(data_arrays)[:, 5].tolist()
-
-
-def count_error(data_instance, data_label):
-    data_length = len(data_instance)
-    knn.fit(data_instance, data_label)
-    prediksi = knn.predict(data_instance)
-    beda = 0
-
-    for i, item in enumerate(data_label):
-        if (item != prediksi[i]):
-            beda += 1
-
-    return (beda / data_length) * 100
-
+    return False
 
 #%%set_missing
 def setMissingValues(data):
-    data = imp.fast_knn(np.array(data)).tolist()
-    error = count_error(list(np.array(data)[:, :5]),
-                        list(np.array(data)[:, 5]))
+    data = pd.DataFrame({
+        'a': data[:, 0],
+        'b': data[:, 1],
+        'c': data[:, 2],
+        'd': data[:, 3],
+        'e': data[:, 4],
+        'label': data[:, 5]
+    })
+
+    data_missing_grouped = data.groupby('label')
+
+    new_data_grouped = list()
+    for key, item in data_missing_grouped:
+        temp = list(imp.fast_knn(np.array(item), k=3))
+        for i in temp:
+            new_data_grouped.append(i)
 
     with open('data/new_tiroid.csv', 'w') as csvFile:
         writer = csv.writer(csvFile)
-        print("Error sebelum normalisasi ", error, "%")
-        writer.writerows(data)
+        writer.writerows(new_data_grouped)
     csvFile.close()
 
-    return data
-
+    return new_data_grouped
 
 #%%set_min_max
 def setMinMaxNormalization(data):
     minmax_scaler = MinMaxScaler()
-    data_minmax = data
-    data_minmax = minmax_scaler.fit_transform(data)[:, :5].tolist()
 
-    for i, itemi in enumerate(data_minmax):
-        data_minmax[i].append(data_label[i])
+    X = np.array(data)[:, :5]
+    y = np.array(data)[:, 5]
 
-    with open('data/minmax_new_tiroid.csv', 'w') as csvFile:
-        writer = csv.writer(csvFile)
-        writer.writerows(data_minmax)
-    csvFile.close()
+    loo = LeaveOneOut()
+    loo.get_n_splits(X)
 
-    error = count_error(list(np.array(data_minmax)[:, :5]),
-                        list(np.array(data_minmax)[:, 5]))
-    print("Error normalisasi minmax ", error, "%")
+    error = 0
+    for train_index, test_index in loo.split(X):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        X_train = list(minmax_scaler.fit_transform(X_train))
+        X_test = minmax_scaler.transform(X_test)
+        if (count_error(X_train, X_test, y_train, y_test)):
+            error += 1
 
+    print('Error Min-Max : ', (error / len(data)) * 100, '%')
 
 #%%set_zscore
 def setZscoreNormalization(data):
-    data_zscore = list()
-    data_zscore = data
-    data_zscore = stats.zscore(data)[:, :5].tolist()
+    X = np.array(data)[:, :5]
+    y = np.array(data)[:, 5]
 
-    for i, itemi in enumerate(data_zscore):
-        data_zscore[i].append(data_label[i])
+    loo = LeaveOneOut()
+    loo.get_n_splits(X)
 
-    with open('data/zscore_new_tiroid.csv', 'w') as csvFile:
-        writer = csv.writer(csvFile)
-        writer.writerows(data_zscore)
-    csvFile.close()
+    error = 0
+    for train_index, test_index in loo.split(X):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        X_train = list(stats.zscore(X_train))
+        if (count_error(X_train, X_test, y_train, y_test)):
+            error += 1
 
-    error = count_error(list(np.array(data_zscore)[:, :5]),
-                        list(np.array(data_zscore)[:, 5]))
-    print("Error normalisasi zscore ", error, "%")
-    return data_zscore
-
+    print('Error Z-Score : ', (error / len(data)) * 100, '%')
 
 #%%set_sigmoid
 def sigmoid(x):
     import math
     return (1 - math.exp(-x)) / (1 + math.exp(-x))
-
 
 #%%set_sigmoid_normalization
 def setSigmoidNormalization(data):
@@ -108,9 +106,17 @@ def setSigmoidNormalization(data):
                         list(np.array(data_sigmoid)[:, 5]))
     print("Error normalisasi sigmoid ", error, "%")
 
+knn = KNeighborsClassifier(n_neighbors=3)
+data_arrays = pd.read_csv('data/data_tiroid_missing.csv')
+data_arrays = data_arrays.replace('?', np.nan)
+data_arrays = np.array(data_arrays, dtype=float)
+
+data_label = np.array(data_arrays)[:, 5].tolist()
 
 new_data = setMissingValues(data_arrays)
 setMinMaxNormalization(new_data)
+setZscoreNormalization(new_data)
 data_z_score = list()
 data_z_score = setZscoreNormalization(new_data)
 setSigmoidNormalization(data_z_score)
+# setSigmoidNormalization(data_z_score)
