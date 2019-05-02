@@ -7,18 +7,12 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.neighbors import KNeighborsClassifier
 
-knn = KNeighborsClassifier(n_neighbors=5)
+knn = KNeighborsClassifier(n_neighbors=3)
 data_arrays = pd.read_csv('data/data_tiroid_missing.csv')
 data_arrays = data_arrays.replace('?', np.nan)
 data_arrays = np.array(data_arrays, dtype=float)
 
 data_label = np.array(data_arrays)[:, 5].tolist()
-
-new_data = setMissingValues(data_arrays)
-setMinMaxNormalization(new_data)
-data_z_score = list()
-data_z_score = setZscoreNormalization(new_data)
-setSigmoidNormalization(data_z_score)
 
 
 def count_error(data_instance, data_label):
@@ -113,3 +107,10 @@ def setSigmoidNormalization(data):
     error = count_error(list(np.array(data_sigmoid)[:, :5]),
                         list(np.array(data_sigmoid)[:, 5]))
     print("Error normalisasi sigmoid ", error, "%")
+
+
+new_data = setMissingValues(data_arrays)
+setMinMaxNormalization(new_data)
+data_z_score = list()
+data_z_score = setZscoreNormalization(new_data)
+setSigmoidNormalization(data_z_score)
