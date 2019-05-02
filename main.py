@@ -105,8 +105,9 @@ def setSigmoidNormalization(data):
             X_test[0, i] = sigmoid(
                 (X_test[0, i] - stats.tmean(X_train[:, i])) /
                 stats.tstd(X_train[:, i]))
-        X_train = [[sigmoid(itemj) for itemj in item]
-                   for item in stats.zscore(X_train)]
+        X_train = [
+            [sigmoid(itemj) for itemj in item] for item in stats.zscore(X_train)
+        ]
 
         if (count_error(X_train, X_test, y_train, y_test)):
             error += 1
