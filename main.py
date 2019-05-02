@@ -91,19 +91,29 @@ def sigmoid(x):
 
 #%%set_sigmoid_normalization
 def setSigmoidNormalization(data):
-    data_sigmoid = list()
-    data_sigmoid = data
-    for i, itemi in enumerate(data):
-        for j, itemj in enumerate(itemi):
-            if (j < 5):
-                data_sigmoid[i][j] = sigmoid(itemj)
-            else:
-                data_sigmoid[i][j] = itemj
+    X = np.array(data)[:, :5]
+    y = np.array(data)[:, 5]
 
-    with open('data/sigmoidal_new_tiroid.csv', 'w') as csvFile:
-        writer = csv.writer(csvFile)
-        writer.writerows(data_sigmoid)
-    csvFile.close()
+    loo = LeaveOneOut()
+    loo.get_n_splits(X)
+
+    error = 0
+    for train_index, test_index in loo.split(X):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        for i in range(0, len(X_train[0])):
+            X_test[0, i] = sigmoid(
+                (X_test[0, i] - stats.tmean(X_train[:, i])) /
+                stats.tstd(X_train[:, i]))
+        # X_train = list(sigmoid(stats.zscore(X_train)))
+        X_train = [
+            sigmoid(itemj) for itemj in item for item in stats.zscore(X_train)
+        ]
+
+        if (count_error(X_train, X_test, y_train, y_test)):
+            error += 1
+
+    print('Error Sigmoid : ', (error / len(data)) * 100, '%')
 
     error = count_error(list(np.array(data_sigmoid)[:, :5]),
                         list(np.array(data_sigmoid)[:, 5]))
@@ -119,7 +129,4 @@ data_label = np.array(data_arrays)[:, 5].tolist()
 new_data = setMissingValues(data_arrays)
 setMinMaxNormalization(new_data)
 setZscoreNormalization(new_data)
-data_z_score = list()
-data_z_score = setZscoreNormalization(new_data)
-setSigmoidNormalization(data_z_score)
-# setSigmoidNormalization(data_z_score)
+setSigmoidNormalization(new_data)
